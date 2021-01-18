@@ -1,56 +1,76 @@
-import React, {useEffect, useState} from 'react';
-import {Route, Switch, Redirect } from 'react-router-dom';
-import jwt_decode from 'jwt-decode'
-import setAuthToken from './utils/setAuthToken'
-
+// Imports
+import React, { useEffect, useState } from 'react';
+import { Route, Switch, Redirect } from 'react-router-dom';
+import jwt_decode from 'jwt-decode';
+import setAuthToken from './utils/setAuthToken';
+// CSS
 import './App.css';
-
+// Components
 import Welcome from './Components/Welcome';
-import Navbar from './Components/Navbar'
-import { Component } from 'react';
-
-
-
-const PrivateRoute =({component: Component, ...rest})=>{
-const user = localStorage.getIem('jwtToken');
-return <Route {...rest} render={(props)=>{
-return user ? <Component { ...rest }/> : <Redirect to="/login" />
-}}/>
+import Navbar from './Components/Navbar';
+import Footer from './Components/Footer';
+import Profile from './Components/Profile';
+import Signup from './Components/Signup';
+import Login from './Components/Login';
+import About from './Components/About';
+import ChatRoom from "./Components/ChatRoom"
+import Home from "./Components/Home"
+const PrivateRoute = ({ component: Component, ...rest }) => {
+  const user = localStorage.getItem('jwtToken');
+  return <Route {...rest } render={(props) => {
+    return user ? <Component { ...rest } { ...props }/> : <Redirect to="/login" />
+  }}/>
 }
 
- 
 function App() {
-const[currentUser, setCurrentUser] = useState('');
-const[isAuthenticated, setIsAuthenticated]=useState(true);
-useEffect(()=>{
-  let token;
-  if(!localStorage.getItem('jwtToken')){
-    setIsAuthenticated(false);
-  }else{
-    token = jwt_decode(localStorage.getItem('jwtToken'));
-    setAuthToken(localStorage.jwtToken)
-    setCurrentUser(token)
-  }
-}, [])
+  // Set state values
+  const [currentUser, setCurrentUser] = useState('');
+  const [isAuthenticated, setIsAuthenticated] = useState(true);
 
-const nowCurrentUser = (userData) => {
-  console.log('nowCurrebtUser is here...');
-  setCurrentUser(userData);
-  setIsAuthenticated(true);
-}
+  useEffect(() => {
+    let token;
+    // if there is no token in localStorage, then the user is in authenticated
+    if (!localStorage.getItem('jwtToken')) {
+      setIsAuthenticated(false);
+    } else {
+      token = jwt_decode(localStorage.getItem('jwtToken'));
+      setAuthToken(localStorage.jwtToken);
+      setCurrentUser(token);
+    }
+  }, []);
 
-const handleLogout = () => {
-  if(locatStorage.getItem('jwtToken')){
-    localStorage.removeItem('jwtToken')
-    setCurrrentUser(null)
-    setIsAuthenticated(false);
+  const nowCurrentUser = (userData) => {
+    console.log('nowCurentUser is here...');
+    setCurrentUser(userData);
+    setIsAuthenticated(true);
   }
-}
+
+  const handleLogout = () => {
+    if (localStorage.getItem('jwtToken')) {
+      localStorage.removeItem('jwtToken');
+      setCurrentUser(null);
+      setIsAuthenticated(false);
+    }
+  }
 
   return (
     <div className="App">
-      <Navbar handleLogout={handleLogout} isAuth={isAuthenticated}/>
-    <Welcome />
+      <Navbar handleLogout={handleLogout} isAuth={isAuthenticated} />
+      <div className="container mt-5">
+        <Switch>
+          <Route path='/signup' component={Signup} />
+          <Route 
+            path='/login' 
+            render={ (props) => <Login {...props} nowCurrentUser={nowCurrentUser} setIsAuthenticated={setIsAuthenticated} user={currentUser}/>} />
+          <Route path='/about' component={ About } />
+          
+          <PrivateRoute path="/profile" component={ Profile } user={currentUser}/>
+          <Route exact path="/" component={ Welcome }/>
+          <Route exact path="/home" component={Home} user={currentUser}/>
+        <PrivateRoute exact path="/home/:roomId" component={ChatRoom} user={currentUser} />
+        </Switch>
+      </div>
+      <Footer />
     </div>
   );
 }
